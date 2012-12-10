@@ -5,40 +5,41 @@ import array
 import StringIO
 
 
+def var_len(value):
+    """ Return the variable length encoding of the input (integer) value
+    as specified by the MIDI standard.
+    """
+    buf = value & 0x7f
+    value >>= 7
+    while value:
+        buf <<= 8
+        buf |= 0x80
+        buf += value & 0x7f
+        value >>= 7
+
+    a = array.array('B')
+    while True:
+        a.append(buf & 0xFF)
+        if buf & 0x80:
+            buf >>= 8
+        else:
+            break
+
+    return a.tostring()
+
+
 class Midi(object):
 
-    def __init__(self, tuples):
+    def __init__(self, tuples, division=96):
         """ Build a representation of the MIDI data from a list of pairs
         (n, d) where n is a MIDI note and d a duration in seconds.
         """
         self.track = []
-        self.division = 96
+        self.division = division
         for note, duration in tuples:
             length_in_ticks = int(duration * 2 * self.division)
             self.track.append((0, 'note on', note))
             self.track.append((length_in_ticks, 'note off', note))
-
-    def _varLen(self, value):
-        """ Return the variable length encoding of the input (integer) value
-        as specified by the MIDI standard.
-        """
-        buf = value & 0x7f
-        value >>= 7
-        while value:
-            buf <<= 8
-            buf |= 0x80
-            buf += value & 0x7f
-            value >>= 7
-
-        a = array.array('B')
-        while True:
-            a.append(buf & 0xFF)
-            if buf & 0x80:
-                buf >>= 8
-            else:
-                break
-
-        return a.tostring()
 
     def write(self, outfile):
         """ Write itself to a valid MIDI file in the file specified by
@@ -59,7 +60,7 @@ class Midi(object):
             if note == 0:  # silence
                 running_time += time
                 continue
-            buf.write(self._varLen(time + running_time))
+            buf.write(var_len(time + running_time))
             code = 0x90 if event == 'note on' else 0x80
             buf.write(struct.pack('>BBB', code, note, 64))
             running_time = 0

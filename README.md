@@ -37,7 +37,7 @@ Fourier transform computations.
 
 ## About
 
-This was built by [Rafik Draoui][me] to make his floppy drive
+This was built by [Rafik Draoui][] to make his floppy drive
 orchestra play tunes he has in his head without having to figure out how to
 write them down in MIDI or flopkestra bytecode by hand.
 
@@ -45,4 +45,4 @@ write them down in MIDI or flopkestra bytecode by hand.
 [flopkestra]: https://github.com/rafikdraoui/flopkestra
 [DFT]: https://en.wikipedia.org/wiki/Discrete_Fourier_transform
 [numpy]: http://numpy.scipy.org
-[me]: http://www.rafik.ca
+[Rafik Draoui]: http://www.rafik.ca

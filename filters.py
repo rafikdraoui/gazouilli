@@ -16,12 +16,12 @@ def durations_in_seconds(pairs, params):
 
 
 def weed_out_short_notes(pairs, params):
-    """Remove notes from pairs whose duration are smaller than the treshold"""
-    duration_treshold = 3
-    return filter(lambda (n, d): d > duration_treshold, pairs)
+    """Remove notes from pairs whose duration are smaller than the threshold"""
+    duration_threshold = 3
+    return filter(lambda (n, d): d > duration_threshold, pairs)
 
 
-#FIXME: make this more pythonic
+#TODO: make this more pythonic
 def absorb_short_notes(pairs, params):
     """
     If a note with a short duration appears between two of the same notes,
@@ -36,7 +36,7 @@ def absorb_short_notes(pairs, params):
         [(95, 2), (96, 1), (95, 8), (92, 6)] --> [(95, 11), (92, 6)]
     """
 
-    duration_treshold = 3
+    duration_threshold = 3
 
     result = []
     i = 0
@@ -47,17 +47,17 @@ def absorb_short_notes(pairs, params):
             n1, d1 = pairs[i + 1]
             n2, d2 = pairs[i + 2]
         except IndexError:
-            if d > duration_treshold:
+            if d > duration_threshold:
                 result.append(pair)
             i += 1
             continue
 
-        if n == n2 and d1 < duration_treshold:
+        if n == n2 and d1 < duration_threshold:
             new_tuple = (n, d + d1 + d2)
             result.append(new_tuple)
             i += 3
         else:
-            if d > duration_treshold:
+            if d > duration_threshold:
                 result.append(pair)
             i += 1
 
