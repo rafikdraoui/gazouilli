@@ -1,26 +1,25 @@
+import argparse
 import array
 import bisect
+import json
 import sys
 import wave
 
 import numpy as np
 
-from filters import absorb_short_notes, durations_in_seconds
-from writers import midi
+import filters
+import writers
 
 
-#TODO? make note durations fit 1/16th (or 1/(2^k)th for some k) of a note
-
+# Names of valid writers
+VALID_WRITERS = [w.lower() for w in writers.__all__]
 
 # Size (in samples) of window partition used to compute DFT
 WINDOW_SIZE = 2 ** 12
 
-# Treshold for amplitude of largest frequency in DFT output to register as
+# Threshold for amplitude of largest frequency in DFT output to register as
 # a note
 SILENCE_TRESHOLD = 10000
-
-# Filter functions to be applied to the output of waveform analysis
-FILTERS = [absorb_short_notes, durations_in_seconds]
 
 # Used for 'clamping' frequency to a standard MIDI frequency
 TABLE = [
@@ -75,17 +74,21 @@ def gather_notes(seq):
     return pairs
 
 
-def filter_output(pairs, filters, params=None):
-    """Apply filter functions in FILTERS successively to the list of pairs"""
+def filter_output(pairs, filters_to_use, params=None):
+    """Apply filter functions in `filters_to_use` successively to the list of
+    pairs.
+    """
     result = pairs
-    for fn in filters:
+    for fn in filters_to_use:
         result = fn(result, params)
     return result
 
 
-def read_wave(infile):
-    """Given a WAV file as input, returns a list of pairs (note, duration)
-    suitable for use by a writer.
+def read_wave(infile, filters_to_use):
+    """Given the name of a WAV file as input, returns a list of pairs
+    (note, duration) filtered by the filters in the sequence `filters_to_use`.
+    The output should be suitable to be used as the argument of the
+    constructor for a writer object.
     """
 
     w = wave.open(infile, 'r')
@@ -93,17 +96,13 @@ def read_wave(infile):
     nchannels, sampwidth, framerate, nframes, comptype, _ = w.getparams()
 
     if nchannels != 1:
-        print('Only mono files are supported at the moment')
-        sys.exit(1)
-    elif sampwidth != 2:
-        print('Only 16-bit files are supported at the moment')
-        sys.exit(1)
-    elif not (44000 <= framerate <= 44100):
-        print('Only 44kHz files are supported at the moment')
-        sys.exit(1)
-    elif comptype != 'NONE':
-        print('Only uncompressed files are supported')
-        sys.exit(1)
+        _handle_error('Only mono files are supported at the moment')
+    if sampwidth != 2:
+        _handle_error('Only 16-bit files are supported at the moment')
+    if not (44000 <= framerate <= 44100):
+        _handle_error('Only 44kHz files are supported at the moment')
+    if comptype != 'NONE':
+        _handle_error('Only uncompressed files are supported')
 
     raw_data = w.readframes(nframes)
     a = array.array('h', raw_data)
@@ -130,17 +129,97 @@ def read_wave(infile):
 
     clamped_freqs = map(clamp, freqs)
     pairs = gather_notes(clamped_freqs)
-    return filter_output(pairs, FILTERS, locals())
+    return filter_output(pairs, filters_to_use, locals())
+
+
+def convert(infile, output_format, filters_to_use, outfile=None):
+    """Convert input file `infile` to the format given by `output_format`
+    using filters in `filters_to_use`, writing the result to the file
+    `outfile`. If the output file is not given, it defaults to the name of the
+    input file with the .wav extension replaced by an appropriate extension
+    for `output_format`.
+
+    The input file name must have a '.wav' extension.
+    """
+
+    assert infile.endswith('.wav'), 'The input file must have a .wav extension'
+
+    pairs = read_wave(infile, filters_to_use)
+    writer = getattr(writers, output_format.capitalize())(pairs)
+    if not outfile:
+        outfile = infile.replace('.wav', writer.file_extension)
+    writer.write(outfile)
+
+
+def _get_arguments():
+    """Create an arguments parser and return the parsed arguments from
+    sys.argv"""
+
+    parser = argparse.ArgumentParser(
+        description='Convert a wave audio file to other formats.')
+    parser.add_argument(
+        'infile', help='The input wave file. Must end with a .wav extension')
+    parser.add_argument(
+        '-c', '--conf',
+        help='Configuration file containing the options to be used (in '
+             'json format). If this option is used, any other option given '
+             'on the command line will be ignored.')
+    parser.add_argument(
+        '-w', '--writer', choices=VALID_WRITERS,
+        help='The writer to use for the output.')
+    parser.add_argument(
+        '-f', '--filters', nargs='*', metavar='FILTER', default=[],
+        choices=filters.__all__,
+        help='Filters to be used, separated by whitespace. Note that if this '
+             'option directly precedes the `infile` argument, the latter '
+             'will be wrongly considered to be a filter. To correct this '
+             'problem, the filters need to be separated from the `infile` '
+             'argument with other options, or with `--` if this is the last '
+             'option used.')
+    parser.add_argument(
+        '-o', '--output', metavar='OUTFILE',
+        help='The output file. By default it has the same name as the input '
+             'file with the .wav ending changed to an appropriate extension.')
+
+    return parser.parse_args()
+
+
+def _handle_error(*messages):
+    """Print each message in the `messages` sequence on its own line  and
+    exit the program with exit code 1.
+    """
+    print('\n'.join(messages))
+    sys.exit(1)
 
 
 if __name__ == '__main__':
-    try:
-        infile = sys.argv[1]
-    except IndexError:
-        print('No input file')
-        sys.exit(1)
-    output = read_wave(infile)
-    """
-    m = midi.Midi(output)
-    m.write(infile.replace('.wav', '.mid'))
-    """
+
+    args = _get_arguments()
+
+    if args.conf:
+        try:
+            with open(args.conf, 'r') as f:
+                conf = json.load(f)
+        except IOError:
+            _handle_error('Cannot open configuration file')
+        except ValueError, e:
+            _handle_error('Cannot parse configuration file',
+                          'Got error: "%s"' % e)
+
+        filters_to_use = []
+        for fltr in conf.get('filters', []):
+            filters_to_use.append(getattr(filters, fltr))
+
+        writer = conf.get('writer')
+        if not writer or writer not in VALID_WRITERS:
+            _handle_error('Invalid writer specified. Valid choices are:',
+                          ', '.join(VALID_WRITERS))
+
+        output = conf.get('output')
+
+    else:
+        filters_to_use = [getattr(filters, fltr) for fltr in args.filters]
+        writer = args.writer
+        output = args.output
+
+    convert(args.infile, writer, filters_to_use, output)

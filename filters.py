@@ -9,6 +9,10 @@ of pairs (the functions should be composable with one another).
 """
 
 
+__all__ = [
+    'durations_in_seconds', 'weed_out_short_notes', 'absorb_short_notes']
+
+
 def durations_in_seconds(pairs, params):
     """Convert duration in number of windows into duration in seconds"""
     seconds_per_window = (1.0 / params['framerate']) * params['window_size']

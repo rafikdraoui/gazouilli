@@ -1,4 +1,4 @@
-""" Writer for MIDI file format"""
+"""Writer for MIDI file format"""
 
 import struct
 import array
@@ -6,7 +6,7 @@ import StringIO
 
 
 def var_len(value):
-    """ Return the variable length encoding of the input (integer) value
+    """Return the variable length encoding of the input (integer) value
     as specified by the MIDI standard.
     """
     buf = value & 0x7f
@@ -30,8 +30,10 @@ def var_len(value):
 
 class Midi(object):
 
+    file_extension = '.mid'
+
     def __init__(self, tuples, division=96):
-        """ Build a representation of the MIDI data from a list of pairs
+        """Build a representation of the MIDI data from a list of pairs
         (n, d) where n is a MIDI note and d a duration in seconds.
         """
         self.track = []
@@ -42,7 +44,7 @@ class Midi(object):
             self.track.append((length_in_ticks, 'note off', note))
 
     def write(self, outfile):
-        """ Write itself to a valid MIDI file in the file specified by
+        """Write itself to a valid MIDI file in the file specified by
         outfile.
         """
 

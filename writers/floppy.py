@@ -1,8 +1,8 @@
-""" Writer for Flopkestra bytecode file format"""
+"""Writer for Flopkestra bytecode file format"""
 
 
 def to_hex(value):
-    """ Convert the given integer value into a two byte string
+    """Convert the given integer value into a two byte string
     representation suitable for flopkestra bytecode file format.
     """
     high_byte = hex((0xFF00 & value) >> 8)
@@ -12,14 +12,16 @@ def to_hex(value):
 
 class Floppy(object):
 
+    file_extension = '.flb'
+
     def __init__(self, pairs):
-        """ Build a representation of the music data from a list of pairs
+        """Build a representation of the music data from a list of pairs
         (n, d) where n is a MIDI note and d a duration in seconds.
         """
         self.track = map(lambda (n, d): (n, int(d * 1000)), pairs)
 
     def write(self, outfile):
-        """ Write itself to a flopkestra bytecode file in the file specified
+        """Write itself to a flopkestra bytecode file in the file specified
         by outfile.
         """
         name = outfile.replace('.flb', '')
