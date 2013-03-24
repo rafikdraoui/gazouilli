@@ -63,7 +63,7 @@ def gather_notes(seq):
     sq = seq[:]
     while len(sq) > 0:
         note = sq[0]
-        xs = map(lambda x: x == note, sq)
+        xs = [x == note for x in sq]
         try:
             duration = xs.index(False)
         except ValueError:
@@ -113,6 +113,7 @@ def read_wave(infile, filters_to_use):
 
     # frequencies axis
     xs = np.fft.fftfreq(window_size, 1.0 / framerate)[:window_size / 4]
+
     for i in range(nframes / window_size):
         window = a[i * window_size: (i + 1) * window_size]
         if len(window) < window_size:
@@ -188,7 +189,7 @@ def _handle_error(*messages):
     """Print each message in the `messages` sequence on its own line  and
     exit the program with exit code 1.
     """
-    print('\n'.join(messages))
+    sys.stderr.write('\n'.join(messages) + '\n')
     sys.exit(1)
 
 
@@ -202,9 +203,9 @@ if __name__ == '__main__':
                 conf = json.load(f)
         except IOError:
             _handle_error('Cannot open configuration file')
-        except ValueError, e:
+        except ValueError as e:
             _handle_error('Cannot parse configuration file',
-                          'Got error: "%s"' % e)
+                          'Got error: "{}"'.format(e))
 
         filters_to_use = []
         for fltr in conf.get('filters', []):

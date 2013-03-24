@@ -7,7 +7,7 @@ def to_hex(value):
     """
     high_byte = hex((0xFF00 & value) >> 8)
     low_byte = hex(0xFF & value)
-    return '%s, %s' % (high_byte, low_byte)
+    return '{}, {}'.format(high_byte, low_byte)
 
 
 class Floppy(object):
@@ -18,7 +18,7 @@ class Floppy(object):
         """Build a representation of the music data from a list of pairs
         (n, d) where n is a MIDI note and d a duration in seconds.
         """
-        self.track = map(lambda (n, d): (n, int(d * 1000)), pairs)
+        self.track = [(n, int(d * 1000)) for n, d in pairs]
 
     def write(self, outfile):
         """Write itself to a flopkestra bytecode file in the file specified
@@ -26,7 +26,7 @@ class Floppy(object):
         """
         name = outfile.replace('.flb', '')
         with open(outfile, 'wb') as out:
-            out.write('const byte %s[] PROGMEM = {\n' % name)
+            out.write('const byte {}[] PROGMEM = {{\n'.format(name))
 
             # write length of song
             out.write(to_hex(len(self.track) * 3 + 5))
@@ -39,5 +39,5 @@ class Floppy(object):
 
             # write notes and durations
             for note, duration in self.track:
-                out.write(', %s, %s' % (hex(note), to_hex(duration)))
+                out.write(', {}, {}'.format(hex(note), to_hex(duration)))
             out.write('\n}\n')

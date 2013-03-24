@@ -64,7 +64,7 @@ class Midi(object):
                 continue
             buf.write(var_len(time + running_time))
             code = 0x90 if event == 'note on' else 0x80
-            buf.write(struct.pack('>BBB', code, note, 64))
+            buf.write(struct.pack('>BBB', code, note, 127))
             running_time = 0
 
         # write end of track event: FF 2F 00
