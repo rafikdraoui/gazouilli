@@ -44,8 +44,8 @@ class Midi(object):
             self.track.append((length_in_ticks, 'note off', note))
 
     def write(self, outfile):
-        """Write itself to a valid MIDI file in the file specified by
-        outfile.
+        """Write itself to a valid MIDI file in the file specified
+        by outfile.
         """
 
         # write track to buffer

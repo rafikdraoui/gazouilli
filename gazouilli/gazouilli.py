@@ -37,7 +37,8 @@ TABLE = [
     2793.83, 2959.96, 3135.96, 3322.44, 3520.00, 3729.31, 3951.07, 4186.01,
     4434.92, 4698.64, 4978.03, 5274.04, 5587.65, 5919.91, 6271.93, 6644.88,
     7040.00, 7458.62, 7902.13, 8372.02, 8869.84, 9397.27, 9956.06, 10548.08,
-    11175.30, 11839.82, 12543.85, float(sys.maxint)]
+    11175.30, 11839.82, 12543.85, float(sys.maxint)
+]
 
 
 def clamp(freq):
@@ -56,7 +57,8 @@ def gather_notes(seq):
     of consecutive repetition of that note).
 
     Example:
-        gather_notes([53, 92, 92, 92, 96, 96]) --> [(53,1), (92,3), (96,2)]
+        >>> gather_notes([53, 92, 92, 92, 96, 96])
+        [(53,1), (92,3), (96,2)]
     """
 
     pairs = []
@@ -75,8 +77,8 @@ def gather_notes(seq):
 
 
 def filter_output(pairs, filters_to_use, params=None):
-    """Apply filter functions in `filters_to_use` successively to the list of
-    pairs.
+    """Apply filter functions in `filters_to_use` successively to the list
+    of pairs.
     """
     result = pairs
     for fn in filters_to_use:

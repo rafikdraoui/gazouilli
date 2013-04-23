@@ -34,7 +34,7 @@ class Floppy(object):
             # write number of tracks
             out.write(', 0x1, ')
 
-            #write length of track
+            # write length of track
             out.write(to_hex(len(self.track)))
 
             # write notes and durations

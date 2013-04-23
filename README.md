@@ -21,14 +21,13 @@ note in windows.
 The stream of pairs `(note, duration)` created by the previous step can be
 transformed by filters. For example, one might want to weed out all notes that
 have a too short duration, or bump all the note one octave up, or else to get
-the duration of the notes in seconds instead of in number of windows.  The
-filter functions are defined in the file `filter.py`.
+the duration of the notes in seconds instead of in number of windows.
 
 ### Writers
 
 The filtered output is then given to one or more *writers* to be converted
-into another format. At the moment, there is a MIDI file writer and
-a flopkestra bytecode writer. The writers are in the `writers` directory.
+into another format. At the moment, there is a MIDI file writer and a
+flopkestra bytecode writer.
 
 ## Dependencies
 
@@ -44,5 +43,5 @@ write them down in MIDI or flopkestra bytecode by hand.
 
 [flopkestra]: https://github.com/rafikdraoui/flopkestra
 [DFT]: https://en.wikipedia.org/wiki/Discrete_Fourier_transform
-[numpy]: http://numpy.scipy.org
+[numpy]: http://www.numpy.org/
 [Rafik Draoui]: http://www.rafik.ca
