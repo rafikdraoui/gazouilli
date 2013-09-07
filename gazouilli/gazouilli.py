@@ -41,6 +41,10 @@ TABLE = [
 ]
 
 
+class GazouilliException(Exception):
+    pass
+
+
 def clamp(freq):
     """Round the frequency to the nearest MIDI note"""
     i = bisect.bisect(TABLE, freq)
@@ -93,18 +97,22 @@ def read_wave(infile, filters_to_use):
     constructor for a writer object.
     """
 
-    w = wave.open(infile, 'r')
+    try:
+        w = wave.open(infile, 'r')
+    except (IOError, wave.Error) as e:
+        raise GazouilliException(
+            'Cannot read WAV file.\nGot error: "{}"'.format(e))
 
     nchannels, sampwidth, framerate, nframes, comptype, _ = w.getparams()
 
     if nchannels != 1:
-        _handle_error('Only mono files are supported at the moment')
+        raise GazouilliException('Only mono files are supported at the moment')
     if sampwidth != 2:
-        _handle_error('Only 16-bit files are supported at the moment')
+        raise GazouilliException('Only 16-bit files are supported at the moment')
     if not (44000 <= framerate <= 44100):
-        _handle_error('Only 44kHz files are supported at the moment')
+        raise GazouilliException('Only 44kHz files are supported at the moment')
     if comptype != 'NONE':
-        _handle_error('Only uncompressed files are supported')
+        raise GazouilliException('Only uncompressed files are supported')
 
     raw_data = w.readframes(nframes)
     a = array.array('h', raw_data)
@@ -144,8 +152,6 @@ def convert(infile, output_format, filters_to_use, outfile=None):
 
     The input file name must have a '.wav' extension.
     """
-
-    assert infile.endswith('.wav'), 'The input file must have a .wav extension'
 
     pairs = read_wave(infile, filters_to_use)
     writer = getattr(writers, output_format.capitalize())(pairs)
@@ -191,7 +197,7 @@ def _handle_error(*messages):
     """Print each message in the `messages` sequence on its own line  and
     exit the program with exit code 1.
     """
-    sys.stderr.write('\n'.join(messages) + '\n')
+    sys.stderr.write('Error: ' + '\n'.join(messages) + '\n')
     sys.exit(1)
 
 
@@ -203,19 +209,12 @@ if __name__ == '__main__':
         try:
             with open(args.conf, 'r') as f:
                 conf = json.load(f)
-        except IOError:
-            _handle_error('Cannot open configuration file')
-        except ValueError as e:
-            _handle_error('Cannot parse configuration file',
+        except (IOError, ValueError) as e:
+            _handle_error('Cannot read configuration file',
                           'Got error: "{}"'.format(e))
 
         filters_names = conf.get('filters', [])
         filters_to_use = [getattr(filters, fltr) for fltr in filters_names]
-
-        writer = conf.get('writer')
-        if not writer or writer not in VALID_WRITERS:
-            _handle_error('Invalid writer specified. Valid choices are:',
-                          ', '.join(VALID_WRITERS))
 
         output = conf.get('output')
 
@@ -224,4 +223,11 @@ if __name__ == '__main__':
         writer = args.writer
         output = args.output
 
-    convert(args.infile, writer, filters_to_use, output)
+    if not writer or writer not in VALID_WRITERS:
+        _handle_error('Invalid writer specified. Valid choices are:',
+                      ', '.join(VALID_WRITERS))
+
+    try:
+        convert(args.infile, writer, filters_to_use, output)
+    except GazouilliException as e:
+        _handle_error(e.message)
