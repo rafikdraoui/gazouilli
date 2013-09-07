@@ -1,8 +1,12 @@
 """Writer for MIDI file format"""
 
-import struct
 import array
+import struct
 import StringIO
+
+
+NOTE_ON = 'on'
+NOTE_OFF = 'off'
 
 
 def var_len(value):
@@ -40,8 +44,8 @@ class Midi(object):
         self.division = division
         for note, duration in tuples:
             length_in_ticks = int(duration * 2 * self.division)
-            self.track.append((0, 'note on', note))
-            self.track.append((length_in_ticks, 'note off', note))
+            self.track.append((0, NOTE_ON, note))
+            self.track.append((length_in_ticks, NOTE_OFF, note))
 
     def write(self, outfile):
         """Write itself to a valid MIDI file in the file specified
@@ -63,7 +67,7 @@ class Midi(object):
                 running_time += time
                 continue
             buf.write(var_len(time + running_time))
-            code = 0x90 if event == 'note on' else 0x80
+            code = 0x90 if event == NOTE_ON else 0x80
             buf.write(struct.pack('>BBB', code, note, 127))
             running_time = 0
 

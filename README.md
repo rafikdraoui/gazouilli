@@ -14,7 +14,7 @@ a standard MIDI note.
 
 From these, a list of pairs `(n, d)` is created, where `n` is the number of
 the MIDI note corresponding to the frequency and `d` is the duration of that
-note in windows.
+note in numbers of windows.
 
 ### Filters
 

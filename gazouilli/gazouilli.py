@@ -173,12 +173,12 @@ def _get_arguments():
     parser.add_argument(
         '-f', '--filters', nargs='*', metavar='FILTER', default=[],
         choices=filters.__all__,
-        help='Filters to be used, separated by whitespace. Note that if this '
-             'option directly precedes the `infile` argument, the latter '
-             'will be wrongly considered to be a filter. To correct this '
-             'problem, the filters need to be separated from the `infile` '
-             'argument with other options, or with `--` if this is the last '
-             'option used.')
+        help='Filters to be used, in the order of their application, separated '
+             'by whitespace. Note that if this option directly precedes the '
+             '`infile` argument, the latter will be wrongly considered to be a '
+             'filter. To correct this problem, the filters need to be separated '
+             'from the `infile` argument with other options, or with `--` if '
+             'this is the last option used.')
     parser.add_argument(
         '-o', '--output', metavar='OUTFILE',
         help='The output file. By default it has the same name as the input '
@@ -209,9 +209,8 @@ if __name__ == '__main__':
             _handle_error('Cannot parse configuration file',
                           'Got error: "{}"'.format(e))
 
-        filters_to_use = []
-        for fltr in conf.get('filters', []):
-            filters_to_use.append(getattr(filters, fltr))
+        filters_names = conf.get('filters', [])
+        filters_to_use = [getattr(filters, fltr) for fltr in filters_names]
 
         writer = conf.get('writer')
         if not writer or writer not in VALID_WRITERS:

@@ -28,7 +28,7 @@ def weed_out_short_notes(pairs, params):
     return filter(lambda (n, d): d > duration_threshold, pairs)
 
 
-# TODO: make this more pythonic
+# TODO: make this more pythonic?
 def absorb_short_notes(pairs, params):
     """
     If a note with a short duration appears between two of the same notes,
@@ -40,7 +40,7 @@ def absorb_short_notes(pairs, params):
     alternation of two notes) into a single long note.
 
     Example:
-        >>> absorb_short_notes([(95, 2), (96, 1), (95, 8), (92, 6)], params)
+        >>> absorb_short_notes([(95, 2), (96, 1), (95, 8), (92, 6)], {})
         [(95, 11), (92, 6)]
     """
 
@@ -61,8 +61,8 @@ def absorb_short_notes(pairs, params):
             continue
 
         if n == n2 and d1 < duration_threshold:
-            new_tuple = (n, d + d1 + d2)
-            result.append(new_tuple)
+            new_pair = (n, d + d1 + d2)
+            result.append(new_pair)
             i += 3
         else:
             if d > duration_threshold:
