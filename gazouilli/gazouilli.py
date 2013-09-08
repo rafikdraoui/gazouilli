@@ -143,21 +143,34 @@ def read_wave(infile, filters_to_use):
     return filter_output(pairs, filters_to_use, locals())
 
 
-def convert(infile, output_format, filters_to_use, outfile=None):
+def convert(infile, output_format, filters_to_use, outfile=None, stdout=False):
     """Convert input file `infile` to the format given by `output_format`
-    using filters in `filters_to_use`, writing the result to the file
-    `outfile`. If the output file is not given, it defaults to the name of the
-    input file with the .wav extension replaced by an appropriate extension
-    for `output_format`.
+    using filters in `filters_to_use`.
 
-    The input file name must have a '.wav' extension.
+    If `stdout` is True, the output of the writer is written to stdout,
+    otherwise it is written to the file `outfile`. If `outfile` is not given
+    and the writer has an implementation of the `get_output_filename` method,
+    then the result of this method is used as an output filename.
     """
 
     pairs = read_wave(infile, filters_to_use)
     writer = getattr(writers, output_format.capitalize())(pairs)
-    if not outfile:
-        outfile = infile.replace('.wav', writer.file_extension)
-    writer.write(outfile)
+
+    if stdout:
+        fp = sys.stdout
+    else:
+        if outfile is None:
+            try:
+                outfile = writer.get_output_filename(infile)
+            except NotImplementedError:
+                raise GazouilliException(
+                    'Must specify at least one of `output` or `stdout` option '
+                    'with this writer'
+                )
+        fp = open(outfile, 'wb')
+
+    writer.write(fp)
+    fp.close()
 
 
 def _get_arguments():
@@ -166,16 +179,17 @@ def _get_arguments():
 
     parser = argparse.ArgumentParser(
         description='Convert a wave audio file to other formats.')
-    parser.add_argument(
-        'infile', help='The input wave file. Must end with a .wav extension')
+    parser.add_argument('infile', help='The input wave file.')
     parser.add_argument(
         '-c', '--conf',
         help='Configuration file containing the options to be used (in '
              'json format). If this option is used, any other option given '
-             'on the command line will be ignored.')
+             'on the command line will be ignored.'
+    )
     parser.add_argument(
         '-w', '--writer', choices=VALID_WRITERS,
-        help='The writer to use for the output.')
+        help='The writer to use for the output.'
+    )
     parser.add_argument(
         '-f', '--filters', nargs='*', metavar='FILTER', default=[],
         choices=filters.__all__,
@@ -184,11 +198,20 @@ def _get_arguments():
              '`infile` argument, the latter will be wrongly considered to be a '
              'filter. To correct this problem, the filters need to be separated '
              'from the `infile` argument with other options, or with `--` if '
-             'this is the last option used.')
+             'this is the last option used.'
+    )
     parser.add_argument(
         '-o', '--output', metavar='OUTFILE',
-        help='The output file. By default it has the same name as the input '
-             'file with the .wav ending changed to an appropriate extension.')
+        help='The output file. If both the `outfile` and `stdout` options are '
+             'omitted, then the output filename will be the same as the input '
+             'file with the .wav ending changed to an appropriate extension. '
+             'Cannot be used with `stdout`.'
+    )
+    parser.add_argument(
+        '--stdout', action='store_true',
+        help='Write the output to stdout. Not all writers can write to stdout '
+             'Cannot be used with `output`.'
+    )
 
     return parser.parse_args()
 
@@ -217,17 +240,22 @@ if __name__ == '__main__':
         filters_to_use = [getattr(filters, fltr) for fltr in filters_names]
 
         output = conf.get('output')
+        stdout = conf.get('stdout', False)
 
     else:
         filters_to_use = [getattr(filters, fltr) for fltr in args.filters]
         writer = args.writer
         output = args.output
+        stdout = args.stdout
 
     if not writer or writer not in VALID_WRITERS:
         _handle_error('Invalid writer specified. Valid choices are:',
                       ', '.join(VALID_WRITERS))
 
+    if stdout and output:
+        _handle_error('Cannot specify both `outfile` and `stdout` options')
+
     try:
-        convert(args.infile, writer, filters_to_use, output)
+        convert(args.infile, writer, filters_to_use, output, stdout)
     except GazouilliException as e:
         _handle_error(e.message)
