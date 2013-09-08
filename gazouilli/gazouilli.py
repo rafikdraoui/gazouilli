@@ -239,6 +239,7 @@ if __name__ == '__main__':
         filters_names = conf.get('filters', [])
         filters_to_use = [getattr(filters, fltr) for fltr in filters_names]
 
+        writer = conf.get('writer')
         output = conf.get('output')
         stdout = conf.get('stdout', False)
 

@@ -15,7 +15,7 @@ class Floppy(BaseWriter):
 
     def get_output_filename(self, infile):
         name, ext = os.path.splitext(infile)
-        return name + '.flb'
+        return name + '.floppy'
 
     def write(self, fp):
         fp.write('const byte {}[] PROGMEM = {{\n'.format(self.song_name))
