@@ -26,8 +26,8 @@ the duration of the notes in seconds instead of in number of windows.
 ### Writers
 
 The filtered output is then given to one or more *writers* to be converted
-into another format. At the moment, there is a MIDI file writer and a
-flopkestra bytecode writer.
+into another format. At the moment, there are writers for MIDI files,
+flopkestra bytecode and JSON.
 
 ## Dependencies
 
