@@ -14,12 +14,6 @@ import writers
 # Names of valid writers
 VALID_WRITERS = [w.lower() for w in writers.__all__]
 
-# Size (in samples) of window partition used to compute DFT
-WINDOW_SIZE = 2 ** 12
-
-# Threshold for amplitude of largest frequency in DFT output to register as
-# a note
-SILENCE_TRESHOLD = 10000
 
 # Used for 'clamping' frequency to a standard MIDI frequency
 TABLE = [
@@ -80,21 +74,26 @@ def gather_notes(seq):
     return pairs
 
 
-def filter_output(pairs, filters_to_use, params=None):
+def filter_output(pairs, filters_to_use):
     """Apply filter functions in `filters_to_use` successively to the list
     of pairs.
     """
-    result = pairs
     for fn in filters_to_use:
-        result = fn(result, params)
-    return result
+        pairs = fn(pairs)
+    return pairs
 
 
-def read_wave(infile, filters_to_use):
+def read_wave(infile, window_size=2**12, silence_threshold=10000):
     """Given the name of a WAV file as input, returns a list of pairs
-    (note, duration) filtered by the filters in the sequence `filters_to_use`.
-    The output should be suitable to be used as the argument of the
-    constructor for a writer object.
+    (note, duration) where `note` is a the number of a MIDI note and
+    `duration` is the duration of that note in seconds.
+
+    `window_size` is the size (in number of of samples) of the window
+    partitions used to compute the DFT.
+
+    `silence_threshold` is the minimum value that the amplitude of the largest
+    frequency in DFT output for a window must have in order to register as a
+    note.
     """
 
     try:
@@ -119,7 +118,6 @@ def read_wave(infile, filters_to_use):
     w.close()
 
     freqs = []
-    window_size = WINDOW_SIZE
 
     # frequencies axis
     xs = np.fft.fftfreq(window_size, 1.0 / framerate)[:window_size / 4]
@@ -132,15 +130,24 @@ def read_wave(infile, filters_to_use):
         # amplitude axis
         ys = abs(np.fft.fft(window)[:window_size / 4])
 
-        if ys.max() < SILENCE_TRESHOLD:
+        if ys.max() < silence_threshold:
             freq = 0.0
         else:
             freq = xs[ys.argmax()]
         freqs.append(freq)
 
+    # Convert frequencies to the nearest MIDI note number
     clamped_freqs = map(clamp, freqs)
+
+    # Gather windows having the same note value together to get a list of
+    # (note, duration) pairs
     pairs = gather_notes(clamped_freqs)
-    return filter_output(pairs, filters_to_use, locals())
+
+    # Convert durations in number of windows to durations in seconds
+    seconds_per_window = (1.0 / framerate) * window_size
+    pairs = [(n, d * seconds_per_window) for n, d in pairs]
+
+    return pairs
 
 
 def convert(infile, output_format, filters_to_use, outfile=None, stdout=False):
@@ -153,7 +160,8 @@ def convert(infile, output_format, filters_to_use, outfile=None, stdout=False):
     then the result of this method is used as an output filename.
     """
 
-    pairs = read_wave(infile, filters_to_use)
+    pairs = read_wave(infile)
+    pairs = filter_output(pairs, filters_to_use)
     writer = getattr(writers, output_format.capitalize())(pairs)
 
     if stdout:

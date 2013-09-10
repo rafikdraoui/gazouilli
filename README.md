@@ -14,14 +14,14 @@ a standard MIDI note.
 
 From these, a list of pairs `(n, d)` is created, where `n` is the number of
 the MIDI note corresponding to the frequency and `d` is the duration of that
-note in numbers of windows.
+note in seconds.
 
 ### Filters
 
 The stream of pairs `(note, duration)` created by the previous step can be
 transformed by filters. For example, one might want to weed out all notes that
 have a too short duration, or bump all the note one octave up, or else to get
-the duration of the notes in seconds instead of in number of windows.
+the duration of the notes in a different unit than seconds.
 
 ### Writers
 
