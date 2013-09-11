@@ -4,8 +4,9 @@ class BaseWriter(object):
     def __init__(self, pairs, *args, **kwargs):
         self.pairs = pairs
 
-    def get_output_filename(self, infile):
+    def write(self, fp):
         raise NotImplementedError
 
-    def write(self, fp):
+    @staticmethod
+    def get_output_filename(infile):
         raise NotImplementedError

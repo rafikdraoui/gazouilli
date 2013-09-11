@@ -13,10 +13,6 @@ class Floppy(BaseWriter):
         self.song_name = song_name
         self.track = [(n, int(d * 1000)) for n, d in pairs]
 
-    def get_output_filename(self, infile):
-        name, ext = os.path.splitext(infile)
-        return name + '.floppy'
-
     def write(self, fp):
         fp.write('const byte {}[] PROGMEM = {{\n'.format(self.song_name))
 
@@ -33,6 +29,11 @@ class Floppy(BaseWriter):
         for note, duration in self.track:
             fp.write(', {}, {}'.format(hex(note), to_hex(duration)))
         fp.write('\n}\n')
+
+    @staticmethod
+    def get_output_filename(infile):
+        name, ext = os.path.splitext(infile)
+        return name + '.floppy'
 
 
 def to_hex(value):

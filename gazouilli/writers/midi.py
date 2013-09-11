@@ -43,10 +43,6 @@ class Midi(BaseWriter):
             self.track.append((0, note_on, note))
             self.track.append((length_in_ticks, note_off, note))
 
-    def get_output_filename(self, infile):
-        name, ext = os.path.splitext(infile)
-        return name + '.mid'
-
     def write(self, fp):
 
         # 1. Write track to temporary buffer. This is needed since we need to
@@ -89,6 +85,11 @@ class Midi(BaseWriter):
         fp.write(buf.getvalue())
 
         buf.close()
+
+    @staticmethod
+    def get_output_filename(infile):
+        name, ext = os.path.splitext(infile)
+        return name + '.mid'
 
 
 def round_to_closest_sixteenth_note(length_in_ticks, division):
