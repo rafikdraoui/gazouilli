@@ -11,17 +11,18 @@ of pairs (the functions should be composable with one another).
 __all__ = [
     'weed_out_short_notes',
     'absorb_short_notes',
+    'convert_duration_to_integer',
 ]
 
 
-def weed_out_short_notes(pairs):
+def weed_out_short_notes(pairs, **kwargs):
     """Remove notes from pairs whose duration are smaller than the threshold"""
-    duration_threshold = 0.25
+    duration_threshold = kwargs.get('duration_threshold', 0.25)
     return filter(lambda (n, d): d > duration_threshold, pairs)
 
 
 # TODO: make this more pythonic?
-def absorb_short_notes(pairs):
+def absorb_short_notes(pairs, **kwargs):
     """
     If a note with a short duration appears between two of the same notes,
     change the short note to the surrounding ones to make a continous long
@@ -36,7 +37,7 @@ def absorb_short_notes(pairs):
         [(95, 11), (92, 6)]
     """
 
-    duration_threshold = 0.25
+    duration_threshold = kwargs.get('duration_threshold', 0.25)
 
     result = []
     i = 0
@@ -62,3 +63,9 @@ def absorb_short_notes(pairs):
             i += 1
 
     return result
+
+
+def convert_duration_to_integer(pairs, **kwargs):
+    ratio = kwargs.get('ratio', 16)
+
+    return [(n, int(round(d * ratio))) for n, d in pairs]

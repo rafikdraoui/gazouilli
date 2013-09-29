@@ -1,9 +1,9 @@
 # -*- coding: utf-8
 
 import array
+import io
 import os.path
 import struct
-import StringIO
 
 from .base import BaseWriter
 
@@ -49,7 +49,7 @@ class Midi(BaseWriter):
         #    know the length (in bytes) of the track to write the track header
         #    section, and we cannot know it until we processed all the note
         #    events.
-        buf = StringIO.StringIO()
+        buf = io.StringIO()
 
         # set tempo event: FF5103 tttttt
         # tttttt is the tempo (i.e. time in µs per quarter-note)

@@ -13,15 +13,17 @@ class GazouilliException(Exception):
 
 class Gazouilli(object):
 
-    def __init__(self, writer, filters=None, stream=sys.stdout, writer_options=None):
+    def __init__(self, writer, filters=None, stream=sys.stdout,
+                 writer_options=None, filters_kwargs=None):
         self.writer = writer
         self.filters = filters or []
         self.stream = stream
         self.writer_options = writer_options or {}
+        self.filters_kwargs = filters_kwargs or {}
 
     def filter_pairs(self, pairs):
         for fn in self.filters:
-            pairs = fn(pairs)
+            pairs = fn(pairs, **self.filter_kwargs)
         return pairs
 
     def convert(self, pairs, filtered=False):

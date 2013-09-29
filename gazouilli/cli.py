@@ -117,7 +117,7 @@ def run():
         output = args.output
         stdout = args.stdout
 
-    if not writer or writer not in VALID_WRITERS:
+    if writer is None or writer not in VALID_WRITERS:
         handle_error('Invalid writer specified. Valid choices are:',
                      ', '.join(VALID_WRITERS))
 
