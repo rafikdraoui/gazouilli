@@ -46,7 +46,6 @@ class WaveReader(object):
         self.window_size = window_size
         self.silence_threshold = silence_threshold
 
-    # TODO: break-up into smaller functions
     def read(self, infile):
         """Given the name of a WAV file as input, returns a list of pairs
         (note, duration) where `note` is a the number of a MIDI note and
@@ -71,9 +70,17 @@ class WaveReader(object):
             raise GazouilliException('Only uncompressed files are supported')
 
         raw_data = w.readframes(nframes)
-        a = array.array('h', raw_data)
+        data = array.array('h', raw_data)
         w.close()
 
+        freqs = self.get_frequencies(data, nframes, framerate)
+
+        seconds_per_window = (1.0 / framerate) * self.window_size
+        pairs = self.prepare_freqs(freqs, seconds_per_window)
+
+        return pairs
+
+    def get_frequencies(self, data, nframes, framerate):
         window_size = self.window_size
         freqs = []
 
@@ -81,7 +88,9 @@ class WaveReader(object):
         xs = np.fft.fftfreq(window_size, 1.0 / framerate)[:window_size / 4]
 
         for i in range(nframes / window_size):
-            window = a[i * window_size: (i + 1) * window_size]
+            low, high = i * window_size, (i + 1) * window_size
+            window = data[low:high]
+
             if len(window) < window_size:
                 break
 
@@ -92,7 +101,13 @@ class WaveReader(object):
                 freq = 0.0
             else:
                 freq = xs[ys.argmax()]
+
             freqs.append(freq)
+
+    def prepare_freqs(self, freqs, seconds_per_window):
+        """Convert the sequence of raw frequencies `freqs` to a list of
+        (note, duration) pairs.
+        """
 
         # Convert frequencies to the nearest MIDI note number
         clamped_freqs = map(clamp, freqs)
@@ -102,7 +117,6 @@ class WaveReader(object):
         pairs = collect_consecutive_values(clamped_freqs)
 
         # Convert durations in number of windows to durations in seconds
-        seconds_per_window = (1.0 / framerate) * window_size
         pairs = [(n, d * seconds_per_window) for n, d in pairs]
 
         return pairs
