@@ -1,4 +1,5 @@
 import array
+import contextlib
 import sys
 import wave
 
@@ -23,7 +24,7 @@ class Gazouilli(object):
 
     def filter_pairs(self, pairs):
         for fn in self.filters:
-            pairs = fn(pairs, **self.filter_kwargs)
+            pairs = fn(pairs, **self.filters_kwargs)
         return pairs
 
     def convert(self, pairs, filtered=False):
@@ -55,25 +56,25 @@ class WaveReader(object):
         """
 
         try:
-            w = wave.open(infile, 'r')
+            with contextlib.closing(wave.open(infile, 'r')) as w:
+                nchannels, sampwidth, framerate, nframes, comptype, _ = w.getparams()
+
+                if nchannels != 1:
+                    raise GazouilliException('Only mono files are supported at the moment')
+                if sampwidth != 2:
+                    raise GazouilliException('Only 16-bit files are supported at the moment')
+                if not (44000 <= framerate <= 44100):
+                    raise GazouilliException('Only 44kHz files are supported at the moment')
+                if comptype != 'NONE':
+                    raise GazouilliException('Only uncompressed files are supported')
+
+                raw_data = w.readframes(nframes)
+
         except (IOError, wave.Error) as e:
             raise GazouilliException(
                 'Cannot read WAV file.\nGot error: "{}"'.format(e))
 
-        nchannels, sampwidth, framerate, nframes, comptype, _ = w.getparams()
-
-        if nchannels != 1:
-            raise GazouilliException('Only mono files are supported at the moment')
-        if sampwidth != 2:
-            raise GazouilliException('Only 16-bit files are supported at the moment')
-        if not (44000 <= framerate <= 44100):
-            raise GazouilliException('Only 44kHz files are supported at the moment')
-        if comptype != 'NONE':
-            raise GazouilliException('Only uncompressed files are supported')
-
-        raw_data = w.readframes(nframes)
         data = array.array('h', raw_data)
-        w.close()
 
         freqs = self.get_frequencies(data, nframes, framerate)
 
@@ -105,6 +106,8 @@ class WaveReader(object):
                 freq = xs[ys.argmax()]
 
             freqs.append(freq)
+
+        return freqs
 
     def prepare_freqs(self, freqs, seconds_per_window):
         """Convert the sequence of raw frequencies `freqs` to a list of
