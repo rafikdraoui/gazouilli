@@ -18,7 +18,7 @@ TABLE = [
     2793.83, 2959.96, 3135.96, 3322.44, 3520.00, 3729.31, 3951.07, 4186.01,
     4434.92, 4698.64, 4978.03, 5274.04, 5587.65, 5919.91, 6271.93, 6644.88,
     7040.00, 7458.62, 7902.13, 8372.02, 8869.84, 9397.27, 9956.06, 10548.08,
-    11175.30, 11839.82, 12543.85, float(sys.maxint)
+    11175.30, 11839.82, 12543.85, float(sys.maxsize)
 ]
 
 
@@ -32,6 +32,8 @@ def clamp(freq):
         return i
 
 
+# TODO: There must be a way to do this with only one pass and without loading
+# the whole sequence into memory. "What would Haskell do?"
 def collect_consecutive_values(seq):
     """Given a sequence of values, output a list of pairs (v, n) where v is a
     value and n is the number of consecutive repetitions of that value.
@@ -42,14 +44,14 @@ def collect_consecutive_values(seq):
     """
 
     pairs = []
-    sq = seq[:]
+    sq = list(seq)
     while len(sq) > 0:
         val = sq[0]
         xs = [x == val for x in sq]
-        try:
-            count = xs.index(False)
-        except ValueError:
+        if all(xs):
             count = len(xs)
+        else:
+            count = xs.index(False)
         pairs.append((val, count))
         sq = sq[count:]
 
