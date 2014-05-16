@@ -37,7 +37,7 @@ def convert(infile, output_format, filters_to_use, outfile=None, stdout=False):
 
     pairs = WaveReader().read(infile)
     gazouilli = Gazouilli(writer, filters=filters_to_use, stream=fp)
-    gazouilli.convert(pairs, filtered=True)
+    gazouilli.convert(pairs, apply_filters=True)
     fp.close()
 
 

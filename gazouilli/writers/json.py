@@ -13,6 +13,6 @@ class Json(BaseWriter):
         json.dump(self.pairs, fp)
 
     @staticmethod
-    def get_output_filename(self, infile):
+    def get_output_filename(infile):
         name, ext = os.path.splitext(infile)
         return name + '.json'

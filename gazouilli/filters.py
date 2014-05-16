@@ -18,7 +18,7 @@ __all__ = [
 def weed_out_short_notes(pairs, **kwargs):
     """Remove notes from pairs whose duration are smaller than the threshold"""
     duration_threshold = kwargs.get('duration_threshold', 0.25)
-    return filter(lambda (n, d): d > duration_threshold, pairs)
+    return [(n, d) for (n, d) in pairs if d > duration_threshold]
 
 
 # TODO: make this more pythonic?

@@ -27,8 +27,8 @@ class Gazouilli(object):
             pairs = fn(pairs, **self.filters_kwargs)
         return pairs
 
-    def convert(self, pairs, filtered=False):
-        if filtered:
+    def convert(self, pairs, apply_filters=False):
+        if apply_filters:
             pairs = self.filter_pairs(pairs)
 
         w = self.writer(pairs, **self.writer_options)
@@ -78,8 +78,7 @@ class WaveReader(object):
 
         freqs = self.get_frequencies(data, nframes, framerate)
 
-        seconds_per_window = (1.0 / framerate) * self.window_size
-        pairs = self.prepare_freqs(freqs, seconds_per_window)
+        pairs = self.prepare_freqs(freqs, framerate)
 
         return pairs
 
@@ -109,10 +108,11 @@ class WaveReader(object):
 
         return freqs
 
-    def prepare_freqs(self, freqs, seconds_per_window):
+    def prepare_freqs(self, freqs, framerate):
         """Convert the sequence of raw frequencies `freqs` to a list of
         (note, duration) pairs.
         """
+        seconds_per_window = (1.0 / framerate) * self.window_size
 
         # Convert frequencies to the nearest MIDI note number
         clamped_freqs = map(clamp, freqs)
